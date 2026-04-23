@@ -53,7 +53,6 @@ LB_SIGNAL_FIRE_MINUTE_UTC: int = 0
 LB_SIGNAL_FIRE_SECOND_UTC: int = 15  # 15s after 07:00 — backtest scans from 07:00:00
 LB_EOD_HOUR_UTC: int = 20            # force-close LB intraday trades
 LB_EOD_MINUTE_UTC: int = 0           # matches backtest's SESSION_END=20 (bar_time.hour >= 20)
-LB_HOURLY_CHECK_MINUTE_UTC: int = 5  # dual-trigger H1 check
 LB_TAG: str = "lb_eurusd"
 
 # =========================

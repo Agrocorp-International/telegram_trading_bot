@@ -577,56 +577,6 @@ def oco_watchdog_tick() -> Optional[dict]:
 
 
 # =========================
-# Hourly dual-trigger check
-# =========================
-
-def hourly_dual_trigger_check() -> Optional[dict]:
-    """Cancel both pending orders if the last completed H1 candle spanned both
-    buy_stop and sell_stop levels — conservative whipsaw skip."""
-    state = load_state()
-    if not state:
-        return None
-    if state.get("status") != "armed":
-        return None
-
-    buy_stop = state.get("buy_stop")
-    sell_stop = state.get("sell_stop")
-    if not buy_stop or not sell_stop:
-        return None
-
-    candle = oc.get_latest_complete_h1_candle()
-    if not candle:
-        return None
-
-    if candle["high"] >= buy_stop and candle["low"] <= sell_stop:
-        journal("dual_trigger_detected",
-                candle_time=str(candle["datetime"]),
-                candle_high=candle["high"], candle_low=candle["low"],
-                buy_stop=buy_stop, sell_stop=sell_stop)
-        cancelled = []
-        errors = []
-        for label, order_id in [("buy", state.get("buy_order_id")),
-                                 ("sell", state.get("sell_order_id"))]:
-            if order_id:
-                try:
-                    oc.cancel_order(order_id)
-                    cancelled.append(order_id)
-                except Exception as e:
-                    errors.append({"label": label, "order_id": order_id, "error": str(e)})
-                    journal("dual_trigger_cancel_error",
-                            label=label, order_id=order_id, error=str(e))
-        clear_state()
-        journal("dual_trigger_skip_completed",
-                cancelled=cancelled, errors=errors,
-                candle_time=str(candle["datetime"]))
-        return {"action": "dual_trigger_skip",
-                "candle_time": str(candle["datetime"]),
-                "cancelled": cancelled, "errors": errors}
-
-    return None
-
-
-# =========================
 # EOD sweep
 # =========================
 

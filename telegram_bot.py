@@ -45,7 +45,6 @@ from config import (
     EVENTS_JOURNAL_FILE,
     LB_EOD_HOUR_UTC,
     LB_EOD_MINUTE_UTC,
-    LB_HOURLY_CHECK_MINUTE_UTC,
     LB_MAX_SPREAD_PIPS,
     LB_SIGNAL_FIRE_HOUR_UTC,
     LB_SIGNAL_FIRE_MINUTE_UTC,
@@ -74,7 +73,6 @@ from live_core import (
     fmt_sgt,
     format_session_schedule,
     format_signal,
-    hourly_dual_trigger_check,
     journal,
     load_state,
     oco_watchdog_tick,
@@ -1073,25 +1071,6 @@ async def scheduled_watchdog(application: Application):
 
 
 
-async def scheduled_hourly_candle_check(application: Application):
-    if load_state() is None:
-        return
-    try:
-        action = await _with_lock_app(application, hourly_dual_trigger_check)
-    except Exception as e:
-        log.warning(f"hourly_candle_check error: {e}")
-        return
-    if action and action.get("action") == "dual_trigger_skip":
-        candle_sgt = fmt_sgt(action["candle_time"])
-        await safe_send(
-            application,
-            f"⏭ Dual-trigger H1 candle ({candle_sgt}). "
-            f"Both stops spanned — orders cancelled, skipping today. "
-            f"cancelled={action['cancelled']}",
-            context="hourly_dual_trigger",
-        )
-
-
 
 async def scheduled_daily_summary_job(application: Application):
     log.info("daily_summary_job firing.")
@@ -1212,11 +1191,6 @@ def main() -> None:
         hour=LB_EOD_HOUR_UTC, minute=LB_EOD_MINUTE_UTC,
         timezone=timezone.utc,
     )
-    hourly_check_trigger = CronTrigger(
-        day_of_week="mon-fri",
-        hour="8-19", minute=LB_HOURLY_CHECK_MINUTE_UTC,
-        timezone=timezone.utc,
-    )
     watchdog_trigger = IntervalTrigger(seconds=WATCHDOG_SECONDS)
     daily_summary_trigger = CronTrigger(
         day_of_week="mon-fri", hour=20, minute=0, second=0, timezone=timezone.utc
@@ -1245,9 +1219,6 @@ def main() -> None:
                           id="watchdog_job", replace_existing=True)
         scheduler.add_job(scheduled_eod, eod_trigger, args=[app],
                           id="eod_job", replace_existing=True,
-                          misfire_grace_time=300, coalesce=True)
-        scheduler.add_job(scheduled_hourly_candle_check, hourly_check_trigger, args=[app],
-                          id="hourly_candle_check", replace_existing=True,
                           misfire_grace_time=300, coalesce=True)
         if HEARTBEAT_URL:
             scheduler.add_job(scheduled_heartbeat, IntervalTrigger(minutes=5),

@@ -72,7 +72,6 @@ All OANDA calls are serialized by a single `asyncio.Lock` (`application.bot_data
 |---|---|---|---|
 | `signal_job` | Cron Mon-Fri 07:00:15 UTC | Compute & place buy/sell stop pair | [telegram_bot.py:991](telegram_bot.py#L991) → `_signal_job_blocking` at [:285](telegram_bot.py#L285) |
 | `watchdog_job` | Interval 30 s | OCO: cancel sibling on fill, detect SL/TP close | `oco_watchdog_tick` [live_core.py:448](live_core.py#L448) |
-| `hourly_candle_check` | Cron Mon-Fri 08-19 : xx:05 UTC | Whipsaw guard — cancel both if last H1 candle engulfed both entries | `hourly_dual_trigger_check` [live_core.py:583](live_core.py#L583) |
 | `eod_job` | Cron Mon-Fri 20:00 UTC | Force-close open LB trade, cancel stale pending | `eod_sweep` [live_core.py:637](live_core.py#L637) |
 | `daily_summary_job` | Cron Mon-Fri 20:00 UTC | DM daily P&L summary | [telegram_bot.py:1079](telegram_bot.py#L1079) |
 | `heartbeat_job` | Interval 5 min | Ping `HEARTBEAT_URL` for uptime monitoring (optional) | [telegram_bot.py:1233](telegram_bot.py#L1233) |
@@ -104,10 +103,6 @@ At **process start** (`post_init`): `startup_reconcile` ([live_core.py:753](live
                - one filled         → cancel sibling, mark filled_side
                - both filled (rare) → close the losing side
                - filled leg gone    → SL/TP hit → append trade log, clear state
-
-08:05, 09:05, …, 19:05   hourly_dual_trigger_check:
-             if last completed H1 candle spanned BOTH buy_stop and sell_stop,
-             cancel both pending orders (whipsaw skip).
 
 20:00     eod_job:  force-close any still-open LB trade, cancel any pending,
                      reconcile state → append to trade log.

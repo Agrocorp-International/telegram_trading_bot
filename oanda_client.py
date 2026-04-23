@@ -103,22 +103,6 @@ def get_current_price() -> LivePriceQuote:
 # Candles
 # =========================
 
-def get_latest_complete_h1_candle() -> Optional[dict]:
-    params = {"granularity": "H1", "price": "M", "count": 3}
-    r = instruments.InstrumentsCandles(instrument=INSTRUMENT, params=params)
-    _client().request(r)
-    for c in reversed(r.response["candles"]):
-        if bool(c["complete"]):
-            mid = c["mid"]
-            return {
-                "datetime": pd.to_datetime(c["time"], utc=True).tz_localize(None),
-                "open":  float(mid["o"]),
-                "high":  float(mid["h"]),
-                "low":   float(mid["l"]),
-                "close": float(mid["c"]),
-            }
-    return None
-
 
 def get_h1_candles(count: int = CANDLE_LOOKBACK_COUNT) -> pd.DataFrame:
     params = {"granularity": "H1", "price": "M", "count": count}
@@ -380,7 +364,6 @@ __all__ = [
     "LivePriceQuote",
     "PricingUnavailable",
     "get_h1_candles",
-    "get_latest_complete_h1_candle",
     "place_stop_entry",
     "place_market_order",
     "place_market_order_with_sl",
