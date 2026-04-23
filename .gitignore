@@ -31,3 +31,9 @@ fx_pause.flag
 .idea/
 .DS_Store
 Thumbs.db
+
+# Backtest scripts & outputs — kept locally, not in the GitHub mirror
+50pips_1hr.py
+50pips_1min.py
+50pips_hybrid.py
+50_pip_trades_*.csv
