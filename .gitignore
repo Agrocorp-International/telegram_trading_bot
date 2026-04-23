@@ -1,0 +1,33 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime state (bot state / journals / logs — regenerated at runtime)
+fx_bot.log
+fx_events.jsonl
+fx_pending_confirmations.json
+pnl_since.json
+lb_state.json
+lb_trade_log.csv
+fx_pause.flag
+
+# Backup files from deploy rollbacks
+*.bak-*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
